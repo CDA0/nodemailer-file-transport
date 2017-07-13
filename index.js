@@ -40,30 +40,57 @@ FileTransport.prototype.createFilename = function(to, subject) {
   return fname;
 };
 
-FileTransport.prototype.send = function(mail, cb) {
-  let fname;
-  let err;
+FileTransport.prototype.createAttachmentFilename = function(to, subject, attachmentName) {
+  let fname = to;
 
-  if (!mail.data.to) {
+  if (this.useSubject) {
+    fname = `${fname} - ${subject}`;
+  }
+
+  fname = `${fname} - ${attachmentName}`;
+
+  return fname;
+};
+
+FileTransport.prototype.saveEmailToFile = function(to, subject, html, attachments) {
+  const fname = this.createFilename(to, subject);
+  const err = validate(fname);
+
+  if (err) {
+    return err;
+  }
+
+  fs.writeFileSync(path.join(this.dir, fname), html);
+
+  if (attachments && attachments.length) {
+    attachments.forEach(a => {
+      const aFname = this.createAttachmentFilename(to, subject, a.filename);
+      fs.writeFileSync(path.join(this.dir, aFname), a.content);
+    });
+  }
+
+  return;
+};
+
+FileTransport.prototype.send = function(mail, cb) {
+  let err;
+  const data = mail.data;
+
+  if (!data.to) {
     return cb(new Error('No destination address'));
   }
 
-  if (Array.isArray(mail.data.to)) {
-    for (var i = 0; i < mail.data.to.length; i++) {
-      fname = this.createFilename(mail.data.to[i], mail.data.subject);
-      err = validate(fname);
-      if (err) {
-        return cb(err);
-      }
-      fs.writeFileSync(path.join(this.dir, fname), mail.data.html);
+  if (Array.isArray(data.to)) {
+    for (let i = 0; i < data.to.length; i++) {
+      err = this.saveEmailToFile(data.to[i], data.subject, data.html, data.attachments);
+      if (err) break;
     }
   } else {
-    fname = this.createFilename(mail.data.to);
-    err = validate(fname);
-    if (err) {
-      return cb(err);
-    }
-    fs.writeFileSync(path.join(this.dir, fname), mail.data.html);
+    err = this.saveEmailToFile(data.to, data.subject, data.html, data.attachments);
+  }
+
+  if (err) {
+    return cb(err);
   }
 
   this.sentMail.push(mail);

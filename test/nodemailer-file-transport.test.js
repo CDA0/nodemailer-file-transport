@@ -121,4 +121,34 @@ describe('mock-transport', () => {
     });
     transport.sentMail.length.should.equal(0);
   });
+
+  it('should send an email if mail has an attachments', () => {
+    const transport = fileTransport({
+      foo: 'bar'
+    });
+    const transporter = nodemailer.createTransport(transport);
+    transporter.sendMail({
+      from: 'sender@address.com',
+      to: 'receiver@address.com',
+      subject: 'hello',
+      text: 'hello world!',
+      attachments: [{ filename: 'attachment.csv', content: 'a,b,c' }]
+    });
+    transport.sentMail.length.should.equal(1);
+  });
+
+  it('should send an email if mail has an attachments with subject in filename', () => {
+    const transport = fileTransport({
+      useSubject: true
+    });
+    const transporter = nodemailer.createTransport(transport);
+    transporter.sendMail({
+      from: 'sender@address.com',
+      to: 'receiver@address.com',
+      subject: 'hello',
+      text: 'hello world!',
+      attachments: [{ filename: 'attachment.csv', content: 'a,b,c' }]
+    });
+    transport.sentMail.length.should.equal(1);
+  });
 });
