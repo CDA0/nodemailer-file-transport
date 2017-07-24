@@ -1,3 +1,13 @@
 # nodemailer-file-transport
 [![Build Status](https://travis-ci.org/CDA0/nodemailer-file-transport.png)](https://travis-ci.org/CDA0/nodemailer-file-transport)
-a file transport for nodemailer
+A file transport for nodemailer
+
+```js
+const transport = fileTransport({
+  dir: './emails',
+  ext: 'html',
+  useSubject: true
+});
+
+const transporter = nodemailer.createTransport(transport);
+```
